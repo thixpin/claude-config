@@ -14,7 +14,7 @@ Instructions live in three layers; **the narrowest layer that can own a rule, ow
 | `skills/` (this repo)     | Reusable workflows for one kind of task                     | On demand, when a task matches |
 | `.claude/` (each project) | Project-specific knowledge: stack, commands, conventions    | Always, in that project        |
 
-Project instructions override global ones. The split keeps context lean (workflow detail loads only when it matches), gives each rule exactly one home, and lets skills change without touching global behavior. `CLAUDE.md` stays short because every line costs context on every task; `skills/` is the layer meant to grow.
+Project instructions override global ones. The split keeps context lean (workflow detail loads only when it matches), gives each rule exactly one home, and lets reusable workflows evolve without changing global behavior. `CLAUDE.md` intentionally contains only global engineering behavior; reusable workflows belong in `skills/`.
 
 ## Repository structure
 
@@ -68,7 +68,7 @@ One line stating the skill's stance.
 The method — steps, checklists, rules.
 ```
 
-Add a matching `!/skills/<name>/` line to `.gitignore` — skills are whitelisted by name, so without it the skill is never committed. Do **not** add it to `CLAUDE.md`, which intentionally holds no skill list. And check first that no existing skill owns the territory: when two skills could apply, neither reliably does.
+Add a matching `!/skills/<name>/` line to `.gitignore` — skills are whitelisted by name, so without it the skill is never committed. Do **not** add anything to `CLAUDE.md`; global engineering behavior belongs there, while reusable workflows belong in `skills/`. Check first that no existing skill owns the territory: when two skills could apply, neither reliably does.
 
 ## Adopting this config
 
