@@ -1,0 +1,35 @@
+# Whitelist strategy: ignore everything, track only durable configuration.
+# Claude Code writes runtime state (sessions, history, caches, credentials)
+# directly into this directory — none of that belongs in version control.
+/*
+
+# Tracked configuration.
+# IMPORTANT: because everything is ignored by default, any NEW top-level file or
+# directory must be added here or git will drop it silently — no error, and
+# `git status` stays clean. Verify with: git status --ignored
+!/.gitignore
+!/LICENSE
+!/README.md
+!/CLAUDE.md
+
+# Skills are whitelisted by name: re-include skills/ itself, re-exclude its
+# children, then name the tracked ones. (A child cannot be re-included while
+# its parent directory is excluded, so all three steps are required.)
+# Unlisted directories under skills/ — e.g. installed third-party skills —
+# stay untracked. A new skill written here needs its own line below.
+!/skills/
+/skills/*
+!/skills/architecture-review/
+!/skills/bug-fix/
+!/skills/code-quality-review/
+!/skills/security-audit/
+!/skills/testing/
+
+# Config surfaces not used yet; listed so they are tracked the day they appear.
+!/commands/
+!/agents/
+!/output-styles/
+
+# Never track local-only or generated files even inside tracked dirs
+settings.local.json
+.DS_Store
