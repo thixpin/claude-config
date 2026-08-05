@@ -1,20 +1,21 @@
 # Claude Code Configuration
 
-My personal [Claude Code](https://claude.com/claude-code) setup — global engineering guidelines and reusable skills, versioned so it can be restored on any machine. See [Adopting this config](#adopting-this-config).
+My personal [Claude Code](https://claude.com/claude-code) setup — global engineering guidelines, reusable skills, and the commands that invoke them, versioned so it can be restored on any machine. See [Adopting this config](#adopting-this-config).
 
 The repository lives at `~/.claude`, where Claude Code also writes runtime state (sessions, history, caches, credentials). `.gitignore` therefore uses a whitelist: everything is ignored by default and only durable configuration is tracked.
 
 ## Design philosophy
 
-Instructions live in three layers; **the narrowest layer that can own a rule, owns it**.
+Instructions live in layers; **the narrowest layer that can own a rule, owns it**.
 
 | Layer                     | Holds                                                       | Loaded                         |
 | ------------------------- | ----------------------------------------------------------- | ------------------------------ |
 | `CLAUDE.md` (this repo)   | Global engineering behavior, for any codebase               | Always                         |
 | `skills/` (this repo)     | Reusable workflows for one kind of task                     | On demand, when a task matches |
+| `commands/` (this repo)   | Entry points that bind a scope and invoke a skill           | When you type `/name`          |
 | `.claude/` (each project) | Project-specific knowledge: stack, commands, conventions    | Always, in that project        |
 
-Project instructions override global ones. The split keeps context lean (workflow detail loads only when it matches), gives each rule exactly one home, and lets reusable workflows evolve without changing global behavior. `CLAUDE.md` intentionally contains only global engineering behavior; reusable workflows belong in `skills/`.
+Project instructions override global ones. The split keeps context lean (workflow detail loads only when it matches), gives each rule exactly one home, and lets reusable workflows evolve without changing global behavior. `CLAUDE.md` intentionally contains only global engineering behavior; reusable workflows belong in `skills/`; a command carries no methodology of its own.
 
 ## Repository structure
 
@@ -23,13 +24,15 @@ Project instructions override global ones. The split keeps context lean (workflo
 ├── CLAUDE.md         # global engineering guidelines (always loaded)
 ├── skills/           # reusable workflows, loaded on demand
 │   └── <name>/SKILL.md
+├── commands/         # slash commands, invoked explicitly
+│   └── <name>.md
 ├── README.md
 └── LICENSE
 ```
 
 Everything else in `~/.claude` is deliberately untracked — runtime state, and `settings.json`: it holds personal preferences (plugins, theme, model) and Claude Code rewrites it on settings changes, so versioning it would only produce noise commits of tool-authored edits.
 
-> **Adding a top-level path?** Anything not whitelisted in `.gitignore` is dropped **silently** — no error, and `git status` stays clean. `commands/`, `agents/`, and `output-styles/` are pre-authorized; anything else needs its own `!/…` line first. Verify with `git status --ignored`.
+> **Adding a top-level path?** Anything not whitelisted in `.gitignore` is dropped **silently** — no error, and `git status` stays clean. `agents/` and `output-styles/` are pre-authorized; anything else needs its own `!/…` line first. Verify with `git status --ignored`, or run `/check-config`.
 
 ## Skills
 
@@ -70,6 +73,39 @@ The method — steps, checklists, rules.
 
 Add a matching `!/skills/<name>/` line to `.gitignore` — skills are whitelisted by name, so without it the skill is never committed. Do **not** add anything to `CLAUDE.md`; global engineering behavior belongs there, while reusable workflows belong in `skills/`. Check first that no existing skill owns the territory: when two skills could apply, neither reliably does.
 
+`/add-skill <name>` runs these steps, including the `.gitignore` line and the table row above.
+
+## Commands
+
+Slash commands are entry points, not methodology. A command exists only when it does something a skill cannot: bind a scope by running git up front, act on this repository itself, or be invoked deterministically. It names the skill it delegates to and never copies that skill's checklist — so most skills have no command, because they already trigger on their own description.
+
+| Command          | Does                                                          | Invokes               |
+| ---------------- | ------------------------------------------------------------- | --------------------- |
+| `/review-changes` | Resolves the diff to review (argument, uncommitted, or branch) and reviews it read-only | `code-quality-review` |
+| `/add-skill`     | Scaffolds `skills/<name>/SKILL.md`, whitelists it, adds the README row | —                     |
+| `/check-config`  | Audits this repo for drift: dropped skills, stale README, layer violations | —                     |
+
+Not commands, deliberately: `bug-fix`, `testing`, `architecture-review`, and `security-audit` trigger reliably from their own descriptions and have no scope to pre-bind; `/review`, `/code-review`, `/security-review`, `/init`, and `/run` are built in; and the skills already route to each other through their `Scope` sections, so no command composes them.
+
+### Adding a command
+
+Create `commands/<name>.md`:
+
+```markdown
+---
+description: What typing this does, in one line
+argument-hint: [what the argument means]
+allowed-tools: Skill, Read, Bash(git status:*)
+---
+
+Context gathered up front: !`git status --short`
+
+Load the `<skill>` skill and apply it to <the scope this command binds>.
+That skill owns the method — follow it rather than restating it here.
+```
+
+Unlike `skills/`, the whole `commands/` directory is whitelisted, so a new file is tracked without editing `.gitignore`. Use `$ARGUMENTS` (or `$1`, `$2`) for input, `` !`cmd` `` to run a command at expansion time, and `@path` to pull a file into context. Keep `allowed-tools` tight — for a review command, omitting `Edit`/`Write` is what makes it read-only.
+
 ## Adopting this config
 
 **Just the skills** — each directory is self-contained:
@@ -79,7 +115,7 @@ git clone https://github.com/thixpin/claude-config.git /tmp/claude-config
 cp -r /tmp/claude-config/skills/bug-fix ~/.claude/skills/
 ```
 
-Skills name each other in their `Scope` sections; copy related ones together if you want the boundaries to work as written.
+Skills name each other in their `Scope` sections; copy related ones together if you want the boundaries to work as written. `commands/review-changes.md` can be copied alongside `code-quality-review`; `add-skill` and `check-config` assume this repository's layout and are not portable on their own.
 
 **The whole config** — follow the setup below. Settings are not included; Claude Code manages your own `settings.json`. One dependency to know: `CLAUDE.md`'s preference for LSP navigation assumes an LSP plugin for your language is enabled — enable one, or drop that line.
 
