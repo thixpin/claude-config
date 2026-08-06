@@ -118,7 +118,7 @@ cp -r /tmp/claude-config/skills/bug-fix ~/.claude/skills/
 
 Skills name each other in their `Scope` sections; copy related ones together if you want the boundaries to work as written. `commands/review-changes.md` can be copied alongside `code-quality-review`; `add-skill` and `check-config` assume this repository's layout and are not portable on their own.
 
-**The whole config** — follow the setup below. Settings are not included; Claude Code manages your own `settings.json`. One dependency to know: `CLAUDE.md`'s preference for LSP navigation assumes an LSP plugin for your language is enabled — enable one, or drop that line.
+**The whole config** — follow the setup below. Settings are not included; Claude Code manages your own `settings.json`. One dependency to know: `CLAUDE.md`'s Navigation guidelines assume an LSP is available, so enable an LSP plugin for the languages you work in — TypeScript, Go, Python, PHP, Rust, whatever your stack is. Nothing breaks without one, since the guidelines fall back to text search when LSP is unavailable; if you would rather not use LSP at all, adjust or remove those two lines from `CLAUDE.md`.
 
 ## Setup on a new machine
 
