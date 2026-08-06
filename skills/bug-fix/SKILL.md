@@ -1,6 +1,6 @@
 ---
 name: bug-fix
-description: Regression-first workflow for fixing bugs. Use whenever fixing a bug, defect, crash, error, flaky behavior, or incorrect output — load it before writing the fix. Ensures the bug is reproduced, root-caused, fixed minimally, and protected by a regression test so it cannot silently return. For writing tests against code that already works use the testing skill; for improving code with no defect use code-quality-review.
+description: Regression-first workflow for fixing a defect whose cause is known. Reproduce the confirmed defect, fix the root cause minimally, protect it with a regression test, and verify. If the root cause is still unknown, use the debugging skill first.
 ---
 
 # Bug Fix
@@ -9,7 +9,9 @@ Fix bugs regression-first: prove the bug exists, fix the cause minimally, prove 
 
 ## Scope
 
-**Use for** any defect with observably wrong behavior — crashes, incorrect output, regressions, flaky behavior in production code.
+**Use for** any defect with observably wrong behavior and a known cause — crashes, incorrect output, regressions.
+
+**This skill begins once the root cause is identified.** If the cause is still unknown, use `debugging` first, then return here with it.
 
 **Do not use for:**
 - Writing or restructuring tests against working code — use `testing`.
@@ -19,11 +21,11 @@ A vulnerability is a bug: use this workflow *and* the `security-audit` checklist
 
 ## Workflow
 
-1. **Reproduce first.** Confirm the bug with a concrete failing case — a command, request, or input that demonstrably misbehaves. If you cannot reproduce it, say so and ask for the missing detail instead of guessing.
-2. **Find the root cause.** Trace from the symptom to the underlying defect. Do not patch the symptom (e.g., adding a null check where the real problem is that the value should never be null). State the root cause in one sentence before fixing.
+1. **Reproduce first.** Confirm the bug with a concrete failing case — a command, request, or input that demonstrably misbehaves. If you cannot reproduce it, use `debugging` to establish a reliable trigger before continuing here.
+2. **Confirm the root cause.** State it in one sentence before fixing, and check the fix targets it rather than the symptom (no null check where the real problem is that the value should never be null). If tracing from symptom to cause is still open work, finish that in `debugging` first.
 3. **Write the regression test before the fix** whenever the project has a test suite and the bug is testable. The test must fail on the current code for the same reason the bug occurs. If an automated test is infeasible (environment-dependent, UI-only, timing), state why and describe the manual verification used instead.
 4. **Fix minimally.** The smallest change that removes the root cause. No drive-by refactoring, renames, or style changes in the same edit — propose those separately if worthwhile.
-5. **Verify.** Run the regression test and confirm it now passes, then run the smallest relevant surrounding test suite to catch collateral damage.
+5. **Verify.** Run the regression test, then the smallest relevant surrounding test suite to catch collateral damage.
 6. **Check for siblings.** Search for other call sites or copies of the same pattern that share the defect. Fix or report them — a bug that exists in three places and is fixed in one is still open.
 
 ## Judgment calls

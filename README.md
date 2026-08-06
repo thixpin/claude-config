@@ -40,6 +40,7 @@ Claude discovers skills by reading each `SKILL.md`'s `description` and invokes o
 
 | Skill                 | Reviews / produces | Use when                                                        |
 | --------------------- | ------------------ | ---------------------------------------------------------------- |
+| `debugging`           | an unknown cause   | Investigating a mystery — intermittent failures, unexplained traces, no known trigger |
 | `bug-fix`             | a defect           | Fixing a bug — reproduce first, root-cause, fix minimally, add a regression test |
 | `testing`             | tests              | Writing or improving tests; fixing flaky tests                    |
 | `code-quality-review` | a change           | Reviewing a diff or branch for readability and maintainability     |
