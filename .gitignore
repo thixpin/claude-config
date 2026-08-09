@@ -30,10 +30,15 @@
 
 !/commands/
 !/output-styles/
+!/scripts/
+!/.github/
 
 # Config surface not used yet; listed so it is tracked the day it appears.
 !/agents/
 
-# Never track local-only or generated files even inside tracked dirs
+# Never track local-only or generated files even inside tracked dirs.
+# Credentials are already covered by /* above; the explicit line is defense
+# in depth against a future whitelist edit or a forced add.
 settings.local.json
+.credentials.json
 .DS_Store

@@ -29,13 +29,16 @@ Project instructions override global ones. The split keeps context lean (workflo
 │   └── <name>.md
 ├── output-styles/    # response styles, activated with /output-style
 │   └── <name>.md
+├── scripts/          # deterministic audit, run locally or by CI
+│   └── check-config.sh
+├── .github/          # CI: runs scripts/check-config.sh on every push
 ├── README.md
 └── LICENSE
 ```
 
 Everything else in `~/.claude` is deliberately untracked — runtime state, and `settings.json`: it holds personal preferences (plugins, theme, model) and Claude Code rewrites it on settings changes, so versioning it would only produce noise commits of tool-authored edits.
 
-> **Adding a top-level path?** Anything not whitelisted in `.gitignore` is dropped **silently** — no error, and `git status` stays clean. `agents/` is pre-authorized; anything else needs its own `!/…` line first. Verify with `git status --ignored`, or run `/check-config`.
+> **Adding a top-level path?** Anything not whitelisted in `.gitignore` is dropped **silently** — no error, and `git status` stays clean. `agents/` is pre-authorized; anything else needs its own `!/…` line first. Verify with `git status --ignored`, `scripts/check-config.sh`, or `/check-config`.
 
 ## Skills
 
@@ -52,7 +55,7 @@ Claude discovers skills by reading each `SKILL.md`'s `description` and invokes o
 | `infra-design`        | a design           | Designing or proposing infrastructure — simplest design first, complexity only when a requirement justifies it |
 | `terraform-review`    | an IaC change      | Reviewing a Terraform/OpenTofu plan or diff — blast radius, state safety, drift before apply |
 
-Names are kebab-case and name the work, not the worker; review skills are `<subject>-review`. Third-party skills can be installed by cloning into `skills/` — each stays an untracked independent clone, updated with `git pull`, keeping its upstream name and license.
+Names are kebab-case and name the work, not the worker; review skills are `<subject>-review`. Third-party skills can be installed by cloning into `skills/` — each stays an untracked independent clone, updated with `git pull`, keeping its upstream name and license. A skill is trusted instructions: read a third-party `SKILL.md` before installing and after every pull, and prefer pinning to a reviewed commit over tracking a branch.
 
 ### Skill boundaries
 
@@ -106,7 +109,7 @@ The method — steps, checklists, rules.
 
 Add a matching `!/skills/<name>/` line to `.gitignore` — skills are whitelisted by name, so without it the skill is never committed. Do **not** add anything to `CLAUDE.md`; global engineering behavior belongs there, while reusable workflows belong in `skills/`. Check first that no existing skill owns the territory: when two skills could apply, neither reliably does.
 
-`/add-skill <name>` runs these steps, including the `.gitignore` line and the table row above.
+`/add-skill <name>` runs these steps, including the `.gitignore` line, the table row, and the boundaries-diagram entry above. `scripts/check-config.sh` verifies all of them deterministically — CI runs it on every push.
 
 ## Commands
 
@@ -177,6 +180,8 @@ git remote add origin https://github.com/thixpin/claude-config.git
 git fetch origin
 git checkout -f master
 ```
+
+`checkout -f` overwrites local files that conflict with tracked paths — if you have already customized `CLAUDE.md` or any skill, check `git status` and back those up first.
 
 ## License
 

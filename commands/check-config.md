@@ -1,8 +1,9 @@
 ---
 description: Audit this config repo for drift — silently dropped skills, stale README, layer violations
-allowed-tools: Read, Grep, Glob, Bash(git status:*), Bash(git ls-files:*), Bash(git check-ignore:*), Bash(ls:*), Bash(find:*)
+allowed-tools: Read, Grep, Glob, Bash(git status:*), Bash(git ls-files:*), Bash(git check-ignore:*), Bash(ls:*), Bash(find:*), Bash(bash scripts/check-config.sh)
 ---
 
+- Mechanical audit: !`bash scripts/check-config.sh || true`
 - Tracked files: !`git ls-files`
 - Skill directories: !`ls -1 skills/`
 - Command files: !`ls -1 commands/`
@@ -12,8 +13,10 @@ allowed-tools: Read, Grep, Glob, Bash(git status:*), Bash(git ls-files:*), Bash(
 
 Audit this repository (`~/.claude`) for configuration drift. Report findings; change nothing unless I ask.
 
+The mechanical audit above already checks whitelist sync, frontmatter, and README table/diagram membership deterministically — treat each of its `FAIL` lines as a confirmed finding rather than re-deriving it. Then audit the judgment items yourself:
+
 1. **Silent drops.** Every skill directory that is mine — not a third-party clone, i.e. no nested `.git` — must have a matching `!/skills/<name>/` line in `.gitignore` and appear in `git ls-files`. This failure is invisible in normal `git status`, so it is the one that matters most. Also flag whitelist lines pointing at directories that no longer exist.
-2. **README accuracy.** The skill table and repository-structure diagram in @README.md must match the tracked skills and tracked top-level paths exactly.
+2. **README accuracy.** The skill table, the boundaries diagram, and the repository-structure diagram in @README.md must match the tracked skills, their Scope handoffs, and the tracked top-level paths exactly.
 3. **Skill frontmatter.** Each tracked `SKILL.md` has `name` matching its directory, and a `description` stating both what it does and when to reach for it.
 4. **Overlap.** No two skills claim the same territory without naming each other in their `Scope` sections.
 5. **Layering.** Each layer keeps only what it owns: `CLAUDE.md` must not restate a skill's workflow, no skill may restate global behavior, and each file in `commands/` must stay a thin entry point — naming the skill it invokes and the scope it binds, never copying that skill's method or checklist.
