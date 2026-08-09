@@ -31,7 +31,7 @@ Repository-specific instructions always take precedence over these global guidel
 ## Git
 
 - Do not commit unless explicitly requested; never push, force-push, rebase, reset, or delete branches without explicit approval.
-- Use short, single-line Conventional Commit messages and the existing Git author configuration; never add Claude as a co-author.
+- Follow the project's existing commit message convention; if none exists, use short, single-line Conventional Commit messages. Never add Claude as a co-author.
 
 ## Communication
 
