@@ -12,7 +12,8 @@ Instructions live in layers; **the narrowest layer that can own a rule, owns it*
 | ------------------------- | ----------------------------------------------------------- | ------------------------------ |
 | `CLAUDE.md` (this repo)   | Global engineering behavior, for any codebase               | Always                         |
 | `skills/` (this repo)     | Reusable workflows for one kind of task                     | On demand, when a task matches |
-| `commands/` (this repo)   | Entry points that bind a scope and invoke a skill           | When you type `/name`          |
+| `commands/` (this repo)   | Explicit entry points for scoped workflows or repository operations | When you type `/name`          |
+| `output-styles/` (this repo) | Response format and tone, never methodology              | When activated with `/output-style` |
 | `.claude/` (each project) | Project-specific knowledge: stack, commands, conventions    | Always, in that project        |
 
 Project instructions override global ones. The split keeps context lean (workflow detail loads only when it matches), gives each rule exactly one home, and lets reusable workflows evolve without changing global behavior. `CLAUDE.md` intentionally contains only global engineering behavior; reusable workflows belong in `skills/`; a command carries no methodology of its own.
@@ -26,13 +27,15 @@ Project instructions override global ones. The split keeps context lean (workflo
 │   └── <name>/SKILL.md
 ├── commands/         # slash commands, invoked explicitly
 │   └── <name>.md
+├── output-styles/    # response styles, activated with /output-style
+│   └── <name>.md
 ├── README.md
 └── LICENSE
 ```
 
 Everything else in `~/.claude` is deliberately untracked — runtime state, and `settings.json`: it holds personal preferences (plugins, theme, model) and Claude Code rewrites it on settings changes, so versioning it would only produce noise commits of tool-authored edits.
 
-> **Adding a top-level path?** Anything not whitelisted in `.gitignore` is dropped **silently** — no error, and `git status` stays clean. `agents/` and `output-styles/` are pre-authorized; anything else needs its own `!/…` line first. Verify with `git status --ignored`, or run `/check-config`.
+> **Adding a top-level path?** Anything not whitelisted in `.gitignore` is dropped **silently** — no error, and `git status` stays clean. `agents/` is pre-authorized; anything else needs its own `!/…` line first. Verify with `git status --ignored`, or run `/check-config`.
 
 ## Skills
 
@@ -46,8 +49,37 @@ Claude discovers skills by reading each `SKILL.md`'s `description` and invokes o
 | `code-quality-review` | a change           | Reviewing a diff or branch for readability and maintainability     |
 | `architecture-review` | the system         | Assessing structure, module boundaries, coupling; planning a refactor |
 | `security-audit`      | trust boundaries   | Security review, fixing a vulnerability, hardening auth or input handling |
+| `infra-design`        | a design           | Designing or proposing infrastructure — simplest design first, complexity only when a requirement justifies it |
+| `terraform-review`    | an IaC change      | Reviewing a Terraform/OpenTofu plan or diff — blast radius, state safety, drift before apply |
 
 Names are kebab-case and name the work, not the worker; review skills are `<subject>-review`. Third-party skills can be installed by cloning into `skills/` — each stays an untracked independent clone, updated with `git pull`, keeping its upstream name and license.
+
+### Skill boundaries
+
+```mermaid
+flowchart TD
+    A[Task] --> B{What is the problem?}
+
+    B -->|Failure, cause unknown| C[debugging]
+    C -->|Root cause identified| D[bug-fix]
+    D -->|Regression test| E[testing]
+
+    B -->|Writing or improving tests| E
+    E -->|Production code is the source of flakiness| C
+
+    B -->|Reviewing code or a change| F[code-quality-review]
+    B -->|Reviewing system structure| G[architecture-review]
+    B -->|Designing infrastructure| I[infra-design]
+    B -->|Reviewing a Terraform change| J[terraform-review]
+    B -->|Security concern| H[security-audit]
+
+    D -.->|Security-sensitive fix| H
+    I -.->|Security step of the design| H
+    I -->|Terraform implementing the design| J
+    J -.->|Terraform security checks| H
+```
+
+Skills combine when their responsibilities overlap — a security-sensitive bug fix applies both `bug-fix` and `security-audit`, and `bug-fix` hands the regression test to `testing`. The diagram shows the handoffs; each skill's `Scope` section states the exact boundary.
 
 ### Adding a skill
 
@@ -86,7 +118,7 @@ Slash commands are entry points, not methodology. A command exists only when it 
 | `/add-skill`     | Scaffolds `skills/<name>/SKILL.md`, whitelists it, adds the README row | —                     |
 | `/check-config`  | Audits this repo for drift: dropped skills, stale README, layer violations | —                     |
 
-Not commands, deliberately: `bug-fix`, `testing`, `architecture-review`, and `security-audit` trigger reliably from their own descriptions and have no scope to pre-bind; `/review`, `/code-review`, `/security-review`, `/init`, and `/run` are built in; and the skills already route to each other through their `Scope` sections, so no command composes them.
+Not commands, deliberately: `debugging`, `bug-fix`, `testing`, `architecture-review`, `security-audit`, `infra-design`, and `terraform-review` trigger reliably from their own descriptions and have no scope to pre-bind; `/review`, `/code-review`, `/security-review`, `/init`, and `/run` are built in; and the skills already route to each other through their `Scope` sections, so no command composes them.
 
 ### Adding a command
 
@@ -107,6 +139,10 @@ That skill owns the method — follow it rather than restating it here.
 
 Unlike `skills/`, the whole `commands/` directory is whitelisted, so a new file is tracked without editing `.gitignore`. Use `$ARGUMENTS` (or `$1`, `$2`) for input, `` !`cmd` `` to run a command at expansion time, and `@path` to pull a file into context. Keep `allowed-tools` tight — for a review command, omitting `Edit`/`Write` is what makes it read-only.
 
+## Output styles
+
+`output-styles/` holds reusable response styles, activated with `/output-style <name>`. A style controls response format and tone only — engineering methodology stays in `CLAUDE.md` and `skills/`, so switching styles changes how answers read, never how work is done. `concise` is the preferred style: short, direct responses that lead with the result.
+
 ## Adopting this config
 
 **Just the skills** — each directory is self-contained:
@@ -117,6 +153,12 @@ cp -r /tmp/claude-config/skills/bug-fix ~/.claude/skills/
 ```
 
 Skills name each other in their `Scope` sections; copy related ones together if you want the boundaries to work as written. `commands/review-changes.md` can be copied alongside `code-quality-review`; `add-skill` and `check-config` assume this repository's layout and are not portable on their own.
+
+**Just an output style** — a style is one self-contained file:
+
+```bash
+cp /tmp/claude-config/output-styles/concise.md ~/.claude/output-styles/
+```
 
 **The whole config** — follow the setup below. Settings are not included; Claude Code manages your own `settings.json`. One dependency to know: `CLAUDE.md`'s Navigation guidelines assume an LSP is available, so enable an LSP plugin for the languages you work in — TypeScript, Go, Python, PHP, Rust, whatever your stack is. Nothing breaks without one, since the guidelines fall back to text search when LSP is unavailable; if you would rather not use LSP at all, adjust or remove those two lines from `CLAUDE.md`.
 

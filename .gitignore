@@ -23,13 +23,16 @@
 !/skills/bug-fix/
 !/skills/code-quality-review/
 !/skills/debugging/
+!/skills/infra-design/
 !/skills/security-audit/
+!/skills/terraform-review/
 !/skills/testing/
 
-# Config surfaces not used yet; listed so they are tracked the day they appear.
 !/commands/
-!/agents/
 !/output-styles/
+
+# Config surface not used yet; listed so it is tracked the day it appears.
+!/agents/
 
 # Never track local-only or generated files even inside tracked dirs
 settings.local.json
