@@ -8,7 +8,7 @@ Arguments: $ARGUMENTS
 
 The first whitespace-separated token of the arguments is the skill name — `<name>` below; anything after it is the stated purpose. If the first token is not a plausible kebab-case skill name, say so and stop rather than scaffolding a misnamed directory. Add the skill `<name>` to this repository (`~/.claude`).
 
-@README.md's "Adding a skill" section is the source of truth for the `SKILL.md` shape and the naming rules — read it and follow it; do not reproduce it here.
+@CONTRIBUTING.md's "Adding a skill" section is the source of truth for the `SKILL.md` shape and the naming rules — read it and follow it; do not reproduce it here.
 
 Steps:
 

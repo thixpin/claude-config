@@ -1,8 +1,6 @@
 # Claude Code Configuration
 
-My personal [Claude Code](https://claude.com/claude-code) setup — global engineering guidelines, reusable skills, and the commands that invoke them, versioned so it can be restored on any machine. See [Adopting this config](#adopting-this-config).
-
-The repository lives at `~/.claude`, where Claude Code also writes runtime state (sessions, history, caches, credentials). `.gitignore` therefore uses a whitelist: everything is ignored by default and only durable configuration is tracked.
+My personal [Claude Code](https://claude.com/claude-code) setup — global engineering guidelines, reusable skills, the commands that invoke them, and output styles, versioned so it can be restored on any machine ([adoption](#adopting-this-config)). It lives at `~/.claude`, where Claude Code also writes runtime state (sessions, history, caches, credentials) — so `.gitignore` is a whitelist: everything is ignored by default, only durable configuration is tracked.
 
 ## Design philosophy
 
@@ -16,7 +14,7 @@ Instructions live in layers; **the narrowest layer that can own a rule, owns it*
 | `output-styles/` (this repo) | Response format and tone, never methodology              | When activated with `/output-style` |
 | `.claude/` (each project) | Project-specific knowledge: stack, commands, conventions    | Always, in that project        |
 
-Project instructions override global ones. The split keeps context lean (workflow detail loads only when it matches), gives each rule exactly one home, and lets reusable workflows evolve without changing global behavior. `CLAUDE.md` intentionally contains only global engineering behavior; reusable workflows belong in `skills/`; a command carries no methodology of its own.
+Project instructions override global ones. Each rule has exactly one home: workflow detail loads only when it matches, and workflows evolve without touching global behavior. `CLAUDE.md` holds only global engineering behavior; workflows belong in `skills/`; a command carries no methodology of its own.
 
 ## Repository structure
 
@@ -33,12 +31,13 @@ Project instructions override global ones. The split keeps context lean (workflo
 │   └── check-config.sh
 ├── .github/          # CI: runs scripts/check-config.sh on every push
 ├── README.md
+├── CONTRIBUTING.md   # how to add skills, commands, and output styles
 └── LICENSE
 ```
 
-Everything else in `~/.claude` is deliberately untracked — runtime state, and `settings.json`: it holds personal preferences (plugins, theme, model) and Claude Code rewrites it on settings changes, so versioning it would only produce noise commits of tool-authored edits.
+Everything else — runtime state, and `settings.json`, which Claude Code rewrites on settings changes — is deliberately untracked.
 
-> **Adding a top-level path?** Anything not whitelisted in `.gitignore` is dropped **silently** — no error, and `git status` stays clean. `agents/` is pre-authorized; anything else needs its own `!/…` line first. Verify with `git status --ignored`, `scripts/check-config.sh`, or `/check-config`.
+To add skills, commands, output styles, or top-level paths, see [CONTRIBUTING.md](CONTRIBUTING.md); `scripts/check-config.sh` verifies the mechanical rules, and CI runs it on every push.
 
 ## Skills
 
@@ -55,7 +54,7 @@ Claude discovers skills by reading each `SKILL.md`'s `description` and invokes o
 | `infra-design`        | a design           | Designing or proposing infrastructure — simplest design first, complexity only when a requirement justifies it |
 | `terraform-review`    | an IaC change      | Reviewing a Terraform/OpenTofu plan or diff — blast radius, state safety, drift before apply |
 
-Names are kebab-case and name the work, not the worker; review skills are `<subject>-review`. Third-party skills can be installed by cloning into `skills/` — each stays an untracked independent clone, updated with `git pull`, keeping its upstream name and license. A skill is trusted instructions: read a third-party `SKILL.md` before installing and after every pull, and prefer pinning to a reviewed commit over tracking a branch.
+Third-party skills install as clones into `skills/` — untracked, updated with `git pull`, under their upstream name and license. A skill is trusted instructions: read a third-party `SKILL.md` before installing and after every pull, and prefer pinning to a reviewed commit over tracking a branch.
 
 ### Skill boundaries
 
@@ -82,38 +81,11 @@ flowchart TD
     J -.->|Terraform security checks| H
 ```
 
-Skills combine when their responsibilities overlap — a security-sensitive bug fix applies both `bug-fix` and `security-audit`, and `bug-fix` hands the regression test to `testing`. The diagram shows the handoffs; each skill's `Scope` section states the exact boundary.
-
-### Adding a skill
-
-Create `skills/<name>/SKILL.md`:
-
-```markdown
----
-name: my-skill
-description: What it does, and when Claude should reach for it. This text is how Claude decides relevance, so be specific about triggers.
----
-
-# My Skill
-
-One line stating the skill's stance.
-
-## Scope
-
-**Use for** the tasks it owns.
-
-**Do not use for:** the neighbouring cases, naming the skill to use instead.
-
-The method — steps, checklists, rules.
-```
-
-Add a matching `!/skills/<name>/` line to `.gitignore` — skills are whitelisted by name, so without it the skill is never committed. Do **not** add anything to `CLAUDE.md`; global engineering behavior belongs there, while reusable workflows belong in `skills/`. Check first that no existing skill owns the territory: when two skills could apply, neither reliably does.
-
-`/add-skill <name>` runs these steps, including the `.gitignore` line, the table row, and the boundaries-diagram entry above. `scripts/check-config.sh` verifies all of them deterministically — CI runs it on every push.
+Skills combine where responsibilities overlap — a security-sensitive fix applies both `bug-fix` and `security-audit`. The diagram shows the handoffs; each skill's `Scope` section states the exact boundary.
 
 ## Commands
 
-Slash commands are entry points, not methodology. A command exists only when it does something a skill cannot: bind a scope by running git up front, act on this repository itself, or be invoked deterministically. It names the skill it delegates to and never copies that skill's checklist — so most skills have no command, because they already trigger on their own description.
+Commands are thin entry points, not methodology. One exists only when it does something a skill cannot — bind a scope by running git up front, act on this repository itself, or be invoked deterministically — and it names the skill it delegates to without copying that skill's checklist.
 
 | Command          | Does                                                          | Invokes               |
 | ---------------- | ------------------------------------------------------------- | --------------------- |
@@ -121,30 +93,11 @@ Slash commands are entry points, not methodology. A command exists only when it 
 | `/add-skill`     | Scaffolds `skills/<name>/SKILL.md`, whitelists it, adds the README row | —                     |
 | `/check-config`  | Audits this repo for drift: dropped skills, stale README, layer violations | —                     |
 
-Not commands, deliberately: `debugging`, `bug-fix`, `testing`, `architecture-review`, `security-audit`, `infra-design`, and `terraform-review` trigger reliably from their own descriptions and have no scope to pre-bind; `/review`, `/code-review`, `/security-review`, `/init`, and `/run` are built in; and the skills already route to each other through their `Scope` sections, so no command composes them.
-
-### Adding a command
-
-Create `commands/<name>.md`:
-
-```markdown
----
-description: What typing this does, in one line
-argument-hint: [what the argument means]
-allowed-tools: Skill, Read, Bash(git status:*)
----
-
-Context gathered up front: !`git status --short`
-
-Load the `<skill>` skill and apply it to <the scope this command binds>.
-That skill owns the method — follow it rather than restating it here.
-```
-
-Unlike `skills/`, the whole `commands/` directory is whitelisted, so a new file is tracked without editing `.gitignore`. Use `$ARGUMENTS` (or `$1`, `$2`) for input, `` !`cmd` `` to run a command at expansion time, and `@path` to pull a file into context. Keep `allowed-tools` tight — for a review command, omitting `Edit`/`Write` is what makes it read-only.
+No other skill has a command, deliberately: they trigger reliably from their own descriptions and have no scope to pre-bind; `/review`, `/code-review`, `/security-review`, `/init`, and `/run` are built in; and skills route to each other through their `Scope` sections.
 
 ## Output styles
 
-`output-styles/` holds reusable response styles, activated with `/output-style <name>`. A style controls response format and tone only — engineering methodology stays in `CLAUDE.md` and `skills/`, so switching styles changes how answers read, never how work is done. `concise` is the preferred style: short, direct responses that lead with the result.
+`output-styles/` holds response styles, activated with `/output-style <name>`. A style controls format and tone only — methodology stays in `CLAUDE.md` and `skills/`. `concise` is the preferred style: short, direct responses that lead with the result.
 
 ## Adopting this config
 
@@ -155,15 +108,15 @@ git clone https://github.com/thixpin/claude-config.git /tmp/claude-config
 cp -r /tmp/claude-config/skills/bug-fix ~/.claude/skills/
 ```
 
-Skills name each other in their `Scope` sections; copy related ones together if you want the boundaries to work as written. `commands/review-changes.md` can be copied alongside `code-quality-review`; `add-skill` and `check-config` assume this repository's layout and are not portable on their own.
+Skills name each other in their `Scope` sections — copy related ones together. `commands/review-changes.md` pairs with `code-quality-review`; `add-skill` and `check-config` assume this repository's layout and are not portable on their own.
 
-**Just an output style** — a style is one self-contained file:
+**Just an output style** — one self-contained file:
 
 ```bash
 cp /tmp/claude-config/output-styles/concise.md ~/.claude/output-styles/
 ```
 
-**The whole config** — follow the setup below. Settings are not included; Claude Code manages your own `settings.json`. One dependency to know: `CLAUDE.md`'s Navigation guidelines assume an LSP is available, so enable an LSP plugin for the languages you work in — TypeScript, Go, Python, PHP, Rust, whatever your stack is. Nothing breaks without one, since the guidelines fall back to text search when LSP is unavailable; if you would rather not use LSP at all, adjust or remove those two lines from `CLAUDE.md`.
+**The whole config** — follow the setup below. `settings.json` is not included; Claude Code manages your own. `CLAUDE.md`'s Navigation guidelines prefer LSP, so enable an LSP plugin for your languages; they fall back to text search without one, or trim those lines from `CLAUDE.md` if you don't want LSP at all.
 
 ## Setup on a new machine
 
@@ -181,7 +134,7 @@ git fetch origin
 git checkout -f master
 ```
 
-`checkout -f` overwrites local files that conflict with tracked paths — if you have already customized `CLAUDE.md` or any skill, check `git status` and back those up first.
+`checkout -f` overwrites local files that conflict with tracked paths — back up any customized `CLAUDE.md` or skills first.
 
 ## License
 
