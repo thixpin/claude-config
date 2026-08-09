@@ -33,7 +33,7 @@ Work through the steps in order. Each step may add to the design only what the p
 
 ## Rules
 
-- - Every non-trivial component must have a clear requirement-based justification; remove components justified only by "best practice" or speculation.
+- Every non-trivial component must have a clear requirement-based justification; remove components justified only by "best practice" or speculation.
 - Prefer boring: managed over self-hosted, fewer technologies over the optimal tool per slot, one region until a requirement says otherwise.
 - Design for the stated horizon, not speculative scale — note the evolution path instead of building it now.
 - When a requirement genuinely cannot be met simply (hard multi-region, strict compliance, extreme scale), the complexity is justified — record which requirement forced it.
