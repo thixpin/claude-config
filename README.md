@@ -100,8 +100,9 @@ The separation keeps context lean: workflow detail loads only when relevant, and
 │   └── <name>.md
 ├── output-styles/    # reusable response styles
 │   └── <name>.md
-├── scripts/          # deterministic repository checks
-│   └── check-config.sh
+├── scripts/          # repository checks
+│   ├── check-config.sh   # deterministic drift audit (runs in CI)
+│   └── eval-triggers.sh  # behavioral skill-routing eval (manual)
 ├── .github/          # CI configuration
 ├── README.md         # overview and adoption guide
 ├── CONTRIBUTING.md   # extension and contribution rules
@@ -334,7 +335,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the detailed rules.
 
 ## Third-party skills
 
-Third-party skills are external instruction sources and should be treated as trusted code.
+Third-party skills are external instruction sources that run with the same trust as your own configuration — review them before installing.
 
 Before installing one:
 

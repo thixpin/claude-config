@@ -52,11 +52,12 @@ total=0
 normalize() {
   # Claude is instructed to return only the skill name, but normalize a little
   # defensively so harmless formatting does not create false negatives.
+  # (sed trims whitespace; xargs would choke on quotes in the answer.)
   tr '[:upper:]' '[:lower:]' |
     tr -d '`' |
     sed '/^[[:space:]]*$/d' |
     head -n 1 |
-    xargs
+    sed 's/^[[:space:]]*//; s/[[:space:]]*$//'
 }
 
 run_claude() {
@@ -104,6 +105,9 @@ run() {
 
     normalized=$(printf '%s' "$answer" | normalize)
 
+    # Exact match is intentional: "the debugging skill" is a FAIL. Loosening
+    # the matcher would hide regressions in the reply-with-name-only
+    # instruction — fix the prompt or the description, not the matcher.
     if [[ "$normalized" == "$expected" ]]; then
       printf '  run %d/%d: PASS (%s)\n' \
         "$run_number" "$EVAL_RUNS" "$normalized"
@@ -223,21 +227,22 @@ printf '\n%s\n' '========================================'
 printf '%s\n' 'SUMMARY'
 printf '%s\n' '========================================'
 
-printf 'cases evaluated : %d\n' "$total"
+# Errored cases could not be evaluated, so they are excluded from the
+# evaluated count and the pass rate.
+evaluated=$((pass + failed))
+
+printf 'cases            : %d\n' "$total"
+printf 'evaluated        : %d\n' "$evaluated"
 printf 'passed           : %d\n' "$pass"
 printf 'failed           : %d\n' "$failed"
 printf 'errors           : %d\n' "$errors"
 
-if ((total > 0)); then
+if ((evaluated > 0)); then
   # Integer percentage; no external calculator required.
-  evaluated=$((pass + failed))
-
-  if ((evaluated > 0)); then
-    rate=$((pass * 100 / evaluated))
-    printf 'pass rate        : %d%%\n' "$rate"
-  else
-    printf 'pass rate        : N/A\n'
-  fi
+  rate=$((pass * 100 / evaluated))
+  printf 'pass rate        : %d%%\n' "$rate"
+else
+  printf 'pass rate        : N/A\n'
 fi
 
 printf '%s\n' '----------------------------------------'

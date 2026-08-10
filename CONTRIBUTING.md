@@ -62,4 +62,5 @@ Anything not whitelisted in `.gitignore` is dropped **silently** — no error, c
 ## Validation
 
 - `bash scripts/check-config.sh` — deterministic drift checks: whitelist sync, frontmatter, README table and diagram membership. CI runs it on every push.
+- `bash scripts/eval-triggers.sh` — behavioral trigger eval: probes whether each skill's `description` routes representative tasks to it, via `claude -p`. Non-deterministic and token-costed, so it is deliberately not in CI — run it before tagging a release and after editing any skill `description` (see the README's Validation section for `EVAL_RUNS`/`EVAL_MODEL`).
 - `/check-config` — runs the script, then audits the judgment items: skill overlap, layering, README accuracy.
