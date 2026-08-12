@@ -10,6 +10,13 @@ Repository-specific instructions always take precedence over these global guidel
 - Write self-documenting code; comment only non-obvious decisions or trade-offs.
 - Never invent APIs, file paths, configuration, or project behavior — inspect the codebase when uncertain.
 
+## Skills
+
+- If one of our skills owns the task per its description, load it before inspecting, changing, or executing anything — even when the task looks simple.
+- If multiple skills match, load the one whose scope owns the entry point; follow any handoff it declares.
+- Follow the loaded skill's workflow; don't use its name as a label.
+- When no skill owns the task — or for parts a skill doesn't cover — follow these global guidelines.
+
 ## Efficiency
 
 - Prefer the simplest implementation that fully satisfies the requirement.

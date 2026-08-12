@@ -198,6 +198,7 @@ A command exists only when it does something a skill cannot — for example, bin
 | `/review-changes` | Resolves the diff to review and reviews it read-only | `code-quality-review` |
 | `/add-skill` | Scaffolds a skill and updates the required repository documentation | — |
 | `/check-config` | Audits the repository for configuration drift | — |
+| `/test-skill` | Reports which skill would be loaded for a task, without performing it | — |
 
 Most skills intentionally have no command because their descriptions already provide enough information for Claude to select them automatically.
 
