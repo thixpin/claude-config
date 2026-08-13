@@ -15,6 +15,8 @@ Fix causes, not symptoms; verify every trust boundary; leave a regression test b
 - General code quality with no security dimension — use `code-quality-review`.
 - A quick automated pass over pending changes — the built-in `/security-review` does that. This skill defines the standards to apply.
 
+**Used alongside:** fixing a vulnerability follows the `bug-fix` workflow with this skill's checklist; IAM policies and secrets inside Terraform apply `terraform-review` and this skill together.
+
 ## Root cause discipline
 
 - For any vulnerability, identify the trust failure behind it (unvalidated input, missing authorization, confused deputy, secret in the wrong place) — then fix that, not just the reported instance.

@@ -93,6 +93,7 @@ The separation keeps context lean: workflow detail loads only when relevant, and
 
 ```text
 ~/.claude/
+├── .gitignore        # whitelist: ignore everything, track only durable config
 ├── CLAUDE.md         # global engineering guidelines
 ├── skills/           # reusable workflows, loaded on demand
 │   └── <name>/SKILL.md
@@ -171,6 +172,8 @@ flowchart TD
     B -->|Reviewing a Terraform change| J[terraform-review]
     B -->|Security concern| H[security-audit]
 
+    F -.->|System-wide structural finding| G
+    F -.->|Security finding| H
     D -.->|Security-sensitive fix| H
     I -.->|Security step of the design| H
     I -->|Terraform implementing the design| J
